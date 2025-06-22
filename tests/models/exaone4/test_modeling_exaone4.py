@@ -41,6 +41,8 @@ from ...test_configuration_common import ConfigTester
 from ...test_modeling_common import ModelTesterMixin, ids_tensor
 from ...test_pipeline_mixin import PipelineTesterMixin
 
+from ...causal_lm_tester import CausalLMModelTest, CausalLMModelTester
+
 
 if is_torch_available():
     import torch
@@ -54,140 +56,18 @@ if is_torch_available():
     )
 
 
-class Exaone4ModelTester:
+class Exaone4ModelTester(CausalLMModelTester):
     config_class = Exaone4Config
     if is_torch_available():
-        model_class = Exaone4Model
-        for_causal_lm_class = Exaone4ForCausalLM
-        for_sequence_class = Exaone4ForSequenceClassification
-        for_token_class = Exaone4ForTokenClassification
-
-    def __init__(
-        self,
-        parent,
-        batch_size=13,
-        seq_length=7,
-        dtype=torch.float32,
-        is_training=True,
-        use_input_mask=True,
-        use_token_type_ids=False,
-        use_labels=True,
-        vocab_size=99,
-        hidden_size=32,
-        num_hidden_layers=2,
-        num_attention_heads=4,
-        num_key_value_heads=2,
-        intermediate_size=37,
-        hidden_act="silu",
-        max_position_embeddings=512,
-        attention_dropout=0.0,
-        reorder_qk_norm=True,
-        sliding_window=50,
-        sliding_window_pattern="LG",
-        type_vocab_size=16,
-        type_sequence_label_size=2,
-        initializer_range=0.02,
-        num_labels=3,
-        num_choices=4,
-        pad_token_id=0,
-    ):
-        self.parent = parent
-        self.batch_size = batch_size
-        self.seq_length = seq_length
-        self.dtype = dtype
-        self.is_training = is_training
-        self.use_input_mask = use_input_mask
-        self.use_token_type_ids = use_token_type_ids
-        self.use_labels = use_labels
-        self.vocab_size = vocab_size
-        self.hidden_size = hidden_size
-        self.num_hidden_layers = num_hidden_layers
-        self.num_attention_heads = num_attention_heads
-        self.num_key_value_heads = num_key_value_heads
-        self.intermediate_size = intermediate_size
-        self.hidden_act = hidden_act
-        self.max_position_embeddings = max_position_embeddings
-        self.attention_dropout = attention_dropout
-        self.reorder_qk_norm = reorder_qk_norm
-        self.sliding_window = sliding_window
-        self.sliding_window_pattern = sliding_window_pattern
-        self.type_vocab_size = type_vocab_size
-        self.type_sequence_label_size = type_sequence_label_size
-        self.initializer_range = initializer_range
-        self.num_labels = num_labels
-        self.num_choices = num_choices
-        self.pad_token_id = pad_token_id
-
-    # Copied from tests.models.llama.test_modeling_llama.LlamaModelTester.prepare_config_and_inputs
-    def prepare_config_and_inputs(self):
-        input_ids = ids_tensor([self.batch_size, self.seq_length], self.vocab_size)
-
-        input_mask = None
-        if self.use_input_mask:
-            input_mask = torch.tril(torch.ones_like(input_ids).to(torch_device))
-
-        token_type_ids = None
-        if self.use_token_type_ids:
-            token_type_ids = ids_tensor([self.batch_size, self.seq_length], self.type_vocab_size)
-
-        sequence_labels = None
-        token_labels = None
-        choice_labels = None
-        if self.use_labels:
-            sequence_labels = ids_tensor([self.batch_size], self.type_sequence_label_size)
-            token_labels = ids_tensor([self.batch_size, self.seq_length], self.num_labels)
-            choice_labels = ids_tensor([self.batch_size], self.num_choices)
-
-        config = self.get_config()
-
-        return config, input_ids, token_type_ids, input_mask, sequence_labels, token_labels, choice_labels
-
-    def get_config(self):
-        return Exaone4Config(
-            vocab_size=self.vocab_size,
-            hidden_size=self.hidden_size,
-            intermediate_size=self.intermediate_size,
-            num_hidden_layers=self.num_hidden_layers,
-            num_attention_heads=self.num_attention_heads,
-            num_key_value_heads=self.num_key_value_heads,
-            hidden_act=self.hidden_act,
-            max_position_embeddings=self.max_position_embeddings,
-            initializer_range=self.initializer_range,
-            attention_dropout=self.attention_dropout,
-            reorder_qk_norm=self.reorder_qk_norm,
-            sliding_window=self.sliding_window,
-            sliding_window_pattern=self.sliding_window_pattern,
-            torch_dtype=self.dtype,
-            pad_token_id=self.pad_token_id,
-        )
-
-    def create_and_check_model(
-        self, config, input_ids, token_type_ids, input_mask, sequence_labels, token_labels, choice_labels
-    ):
-        model = Exaone4Model(config=config)
-        model.to(torch_device)
-        model.eval()
-        result = model(input_ids, attention_mask=input_mask)
-        result = model(input_ids)
-        self.parent.assertEqual(result.last_hidden_state.shape, (self.batch_size, self.seq_length, self.hidden_size))
-
-    def prepare_config_and_inputs_for_common(self):
-        config_and_inputs = self.prepare_config_and_inputs()
-        (
-            config,
-            input_ids,
-            token_type_ids,
-            input_mask,
-            sequence_labels,
-            token_labels,
-            choice_labels,
-        ) = config_and_inputs
-        inputs_dict = {"input_ids": input_ids, "attention_mask": input_mask}
-        return config, inputs_dict
+        base_model_class = Exaone4Model
+        causal_lm_class = Exaone4ForCausalLM
+        sequence_class = Exaone4ForSequenceClassification
+        token_class = Exaone4ForTokenClassification
+        question_answering_class = Exaone4ForQuestionAnswering
 
 
 @require_torch
-class Exaone4ModelTest(ModelTesterMixin, GenerationTesterMixin, PipelineTesterMixin, unittest.TestCase):
+class Exaone4ModelTest(CausalLMModelTest, unittest.TestCase):
     all_model_classes = (
         (
             Exaone4Model,
@@ -214,6 +94,7 @@ class Exaone4ModelTest(ModelTesterMixin, GenerationTesterMixin, PipelineTesterMi
     test_headmasking = False
     test_pruning = False
     fx_compatible = False  # Broken by attention refactor cc @Cyrilvallez
+    model_tester_class = Exaone4ModelTester
     model_split_percents = [0.5, 0.6]
 
     def setUp(self):
@@ -292,72 +173,11 @@ class Exaone4ModelTest(ModelTesterMixin, GenerationTesterMixin, PipelineTesterMi
     def test_multi_gpu_data_parallel_forward(self):
         pass
 
-    def test_config(self):
-        self.config_tester.run_common_tests()
-
-    def test_model(self):
-        config_and_inputs = self.model_tester.prepare_config_and_inputs()
-        self.model_tester.create_and_check_model(*config_and_inputs)
-
-    def test_Exaone4_sequence_classification_model(self):
-        config, input_dict = self.model_tester.prepare_config_and_inputs_for_common()
-        config.num_labels = 3
-        input_ids = input_dict["input_ids"]
-        attention_mask = input_ids.ne(1).to(torch_device)
-        sequence_labels = ids_tensor([self.model_tester.batch_size], self.model_tester.type_sequence_label_size)
-        model = self.model_tester.for_sequence_class(config)
-        model.to(torch_device)
-        model.eval()
-        result = model(input_ids, attention_mask=attention_mask, labels=sequence_labels)
-        self.assertEqual(result.logits.shape, (self.model_tester.batch_size, self.model_tester.num_labels))
-
-    def test_Exaone4_sequence_classification_model_for_single_label(self):
-        config, input_dict = self.model_tester.prepare_config_and_inputs_for_common()
-        config.num_labels = 3
-        config.problem_type = "single_label_classification"
-        input_ids = input_dict["input_ids"]
-        attention_mask = input_ids.ne(1).to(torch_device)
-        sequence_labels = ids_tensor([self.model_tester.batch_size], self.model_tester.type_sequence_label_size)
-        model = self.model_tester.for_sequence_class(config)
-        model.to(torch_device)
-        model.eval()
-        result = model(input_ids, attention_mask=attention_mask, labels=sequence_labels)
-        self.assertEqual(result.logits.shape, (self.model_tester.batch_size, self.model_tester.num_labels))
-
-    def test_Exaone4_sequence_classification_model_for_multi_label(self):
-        config, input_dict = self.model_tester.prepare_config_and_inputs_for_common()
-        config.num_labels = 3
-        config.problem_type = "multi_label_classification"
-        input_ids = input_dict["input_ids"]
-        attention_mask = input_ids.ne(1).to(torch_device)
-        sequence_labels = ids_tensor(
-            [self.model_tester.batch_size, config.num_labels], self.model_tester.type_sequence_label_size
-        ).to(torch.float)
-        model = self.model_tester.for_sequence_class(config)
-        model.to(torch_device)
-        model.eval()
-        result = model(input_ids, attention_mask=attention_mask, labels=sequence_labels)
-        self.assertEqual(result.logits.shape, (self.model_tester.batch_size, self.model_tester.num_labels))
-
-    def test_Exaone4_token_classification_model(self):
-        config, input_dict = self.model_tester.prepare_config_and_inputs_for_common()
-        config.num_labels = 3
-        input_ids = input_dict["input_ids"]
-        attention_mask = input_ids.ne(1).to(torch_device)
-        token_labels = ids_tensor([self.model_tester.batch_size, self.model_tester.seq_length], config.num_labels)
-        model = self.model_tester.for_token_class(config=config)
-        model.to(torch_device)
-        model.eval()
-        result = model(input_ids, attention_mask=attention_mask, labels=token_labels)
-        self.assertEqual(
-            result.logits.shape,
-            (self.model_tester.batch_size, self.model_tester.seq_length, self.model_tester.num_labels),
-        )
-
 
 @require_torch
 class Exaone4IntegrationTest(unittest.TestCase):
-    TEST_MODEL_ID = "/home/junwon_hwang/exaone_models/v40/exaone_32b_4k_qknorm_exaone"  # temporary model
+    # TEST_MODEL_ID = "/exaone_models/v40/exaone4_1.2b_base_beta_release/"  # temporary model
+    TEST_MODEL_ID = "/home/junwon_hwang/exaone_models/v40/exaone4_1.2b_base_beta_release/"  # temporary model
 
     def tearDown(self):
         # TODO (joao): automatic compilation, i.e. compilation when `cache_implementation="static"` is used, leaves
@@ -376,40 +196,12 @@ class Exaone4IntegrationTest(unittest.TestCase):
         with torch.no_grad():
             out = model(input_ids).logits.float().cpu()
 
-        EXPECTED_MEAN = torch.tensor([[48.7355, 39.5970, 31.9457, 15.9101, 4.9173, 23.4806, 9.7128]])
+        EXPECTED_MEAN = torch.tensor([[13.9380, 12.9951, 12.9442, 10.6576, 11.0901, 12.1466, 9.2482]])
         EXPECTED_SLICE = torch.tensor(
-            [
-                48.0000,
-                50.0625,
-                48.7812,
-                49.5000,
-                52.5625,
-                50.2812,
-                51.9062,
-                51.7500,
-                51.6562,
-                51.8438,
-                51.9688,
-                51.7812,
-                51.7500,
-                51.7188,
-                51.4375,
-                52.5938,
-                51.9375,
-                51.9062,
-                52.2188,
-                53.0000,
-                53.0312,
-                52.5000,
-                52.6562,
-                53.0000,
-                53.0312,
-                53.1875,
-                52.9062,
-                53.3750,
-                53.5312,
-                53.3750,
-            ]
+            [ 4.9180, 11.6406, 21.1250, 13.4062, 20.8438, 18.0625, 17.9688, 18.7812,
+        18.0156, 18.3594, 18.5000, 19.1719, 18.5156, 19.3438, 19.5000, 20.6406,
+        19.4844, 19.2812, 19.4688, 20.0156, 19.8438, 19.9531, 19.7188, 20.5938,
+        20.5312, 20.1250, 20.4062, 21.4062, 21.2344, 20.7656]
         )
 
         torch.testing.assert_close(out.mean(-1), EXPECTED_MEAN, atol=1e-2, rtol=1e-2)
@@ -427,40 +219,12 @@ class Exaone4IntegrationTest(unittest.TestCase):
         with torch.no_grad():
             out = model(input_ids).logits.float().cpu()
 
-        EXPECTED_MEAN = torch.tensor([[49.0620, 39.1866, 31.7134, 15.9796, 4.8780, 23.5991, 9.5953]])
+        EXPECTED_MEAN = torch.tensor([[13.8797, 13.0799, 12.9665, 10.7712, 11.1006, 12.2406,  9.3248]])
         EXPECTED_SLICE = torch.tensor(
-            [
-                48.2500,
-                50.5000,
-                49.0000,
-                49.7500,
-                53.0000,
-                50.7500,
-                52.2500,
-                52.0000,
-                52.0000,
-                52.2500,
-                52.2500,
-                52.0000,
-                52.0000,
-                52.0000,
-                51.7500,
-                52.7500,
-                52.2500,
-                52.2500,
-                52.5000,
-                53.2500,
-                53.2500,
-                52.7500,
-                53.0000,
-                53.2500,
-                53.5000,
-                53.5000,
-                53.2500,
-                53.7500,
-                53.7500,
-                53.7500,
-            ]
+            [ 4.8750, 11.6250, 21.0000, 13.3125, 20.8750, 18.0000, 18.0000, 18.7500,
+        18.0000, 18.3750, 18.5000, 19.1250, 18.5000, 19.3750, 19.5000, 20.6250,
+        19.5000, 19.2500, 19.5000, 20.0000, 19.8750, 19.8750, 19.7500, 20.6250,
+        20.5000, 20.1250, 20.3750, 21.3750, 21.2500, 20.7500]
         )
 
         torch.testing.assert_close(out.mean(-1), EXPECTED_MEAN, atol=1e-2, rtol=1e-2)
@@ -470,7 +234,7 @@ class Exaone4IntegrationTest(unittest.TestCase):
 
     @slow
     def test_model_generation(self):
-        EXPECTED_TEXT = 'Tell me about the Miracle on the Han river.\n\nThe Miracle on the Han river is a term used to describe the rapid economic growth and development of South Korea since the 1960s. It refers to the transformation of the country from a poor, agrarian society to a modern, industrialized nation with a strong economy.\n\nThe term "Miracle on the Han river" was coined by British journalist and writer, James E. Fraser, in 1960, after he visited South Korea and was impressed by the rapid changes he saw. He compared the economic growth of South Korea to the "Miracle of the Rhine" in Germany after World War II'
+        EXPECTED_TEXT = "Tell me about the Miracle on the Han river.\n\nThe Miracle on the Han River is a story about the miracle of the Korean War Armistice. The story is told by a Korean soldier who is a witness to the armistice negotiations. He is reluctant to tell the story because he does not want to be a hypocrite, but he feels that everyone should know what really happened.\n\nThe Korean War began on June 25, 1950, when North Korean troops invaded South Korea. Soon the United Nations troops, primarily from South Korea, were in support of the United States. The war was still ongoing when North Korean troops stopped their advance"
         prompt = "Tell me about the Miracle on the Han river."
         tokenizer = AutoTokenizer.from_pretrained(self.TEST_MODEL_ID)
         model = Exaone4ForCausalLM.from_pretrained(
@@ -488,7 +252,7 @@ class Exaone4IntegrationTest(unittest.TestCase):
     @slow
     @require_torch_sdpa
     def test_model_generation_bf16_sdpa(self):
-        EXPECTED_TEXT = "Tell me about the Miracle on the Han river.\n\nThe Miracle on the Han River is a term used to describe the rapid economic growth and development of South Korea since the 1960s. It refers to the transformation of the country from a poor, agrarian society to a modern, industrialized nation with a strong economy.\n\nThe term \"Miracle on the Han River\" was coined by British journalist and writer, James E. Moore, in 1960, after he visited South Korea and was impressed by the country's rapid economic development. He used the term to describe the remarkable growth of the country's economy, which had grown at an"
+        EXPECTED_TEXT = "Tell me about the Miracle on the Han river.\n\nThe Miracle on the Han River is a story about the miracle of the Korean War Armistice.\n\nThe Korean War broke out in 35 years ago in 1950. The war was the result of the ideological conflict between the communist north and the capitalist south. The war was brought to a halt in 1953. There was to be peace talks but no peace treaty. As a result of the stalemate the Korean people have neither a peace treaty nor a reunification nor a democratization of Korea. The stalemate of 35 years has produced a people of 70 million"
         prompt = "Tell me about the Miracle on the Han river."
         tokenizer = AutoTokenizer.from_pretrained(self.TEST_MODEL_ID)
         model = Exaone4ForCausalLM.from_pretrained(
@@ -523,7 +287,7 @@ class Exaone4IntegrationTest(unittest.TestCase):
     @require_torch_accelerator
     @require_torch_sdpa
     def test_model_generation_beyond_sliding_window(self):
-        EXPECTED_TEXT_COMPLETION = " the weather, and the people here.import { Component, OnInit } from '@angular/core';\nimport { ActivatedRoute, Router }"
+        EXPECTED_TEXT_COMPLETION = " but I'm not sure if I'm going to be able to see it. I really enjoy the scenery, but I'm not sure if I"
         tokenizer = AutoTokenizer.from_pretrained(self.TEST_MODEL_ID)
         prompt = "This is a nice place. " * 700 + "I really enjoy the scenery,"
         model = Exaone4ForCausalLM.from_pretrained(
@@ -548,7 +312,7 @@ class Exaone4IntegrationTest(unittest.TestCase):
         )
 
         tokenizer = AutoTokenizer.from_pretrained(self.TEST_MODEL_ID, padding_side="right")
-        EXPECTED_TEXT_COMPLETION = ["The Deep Learning is 100% based on the concept of Neural Networks.\n\n"]
+        EXPECTED_TEXT_COMPLETION = ["The Deep Learning is 100% free and easy to use.\n\n## How to use Deep Learning?\n\n"]
         max_generation_length = tokenizer(EXPECTED_TEXT_COMPLETION, return_tensors="pt", padding=True)[
             "input_ids"
         ].shape[-1]
