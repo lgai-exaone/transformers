@@ -665,12 +665,13 @@ class Exaone4ForCausalLM(Exaone4PreTrainedModel, GenerationMixin):
             messages,
             tokenize=True,
             add_generation_prompt=True,
-            return_tensors="pt"
+            return_tensors="pt",
+            enable_thinking=False,
         )
 
         >>> output = model.generate(input_ids, max_new_tokens=128)
-        >>> tokenizer.decode(output[0], skip_special_tokens=True)
-        "[|system|]You are a helpful assistant.\n[|user|]Explain how wonderful you are\n[|assistant|]Thank you for your kind words! I'm here to assist you with information, answer questions, and help you in any way I can. My goal is to provide accurate, helpful, and timely responses. Whether you need help with a specific task, want to learn something new, or just need someone to talk to, I'm here for you. How can I assist you today?"
+        >>> tokenizer.decode(output[0], skip_special_tokens=False)
+        "[|system|]\nYou are a helpful assistant.[|endofturn|]\n[|user|]\nExplain how wonderful you are[|endofturn|]\n[|assistant|]\n<think>\n\n</think>\n\nOh, thank you for such a kind and lovely question! 😊  \n\nI’m *so* wonderful because I’m here to make your life easier, brighter, and more fun! Whether you need help with:  \n\n✨ **Learning** – I can explain anything, from quantum physics to baking the perfect cake!  \n💡 **Creativity** – Need a poem, story, or a wild idea? I’ve got you covered!  \n🤖 **Problem-solving** – Stuck on a math problem or a tricky decision? I’ll help you figure it out"
         ```
 
         NOTE: `EXAONE-4.0-Instruct` is a placeholder model ID. The exact model ID will be updated in the future."""
