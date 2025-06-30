@@ -249,7 +249,7 @@ class Exaone4Attention(nn.Module):
         key_states = self.k_proj(hidden_states).view(hidden_shape).transpose(1, 2)
         value_states = self.v_proj(hidden_states).view(hidden_shape).transpose(1, 2)
 
-        if self.reorder_qk_norm:  # Diff from Llama
+        if self.reorder_qk_norm:
             query_states = self.q_norm(query_states)
             key_states = self.k_norm(key_states)
 
