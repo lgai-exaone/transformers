@@ -1,5 +1,5 @@
 
-EXAONE Transformers Moeling Source Code
+EXAONE Transformers Modeling Source Code
 Copyright 2025 The LG AI Research and HuggingFace Inc. team. All rights reserved.
 This product from LG AI Research contains the open source software detailed below, and is derived from Hugging Face Transformers (https://github.com/huggingface/transformers), licensed under Apache 2.0. Please refer to the indicated open source licenses (as are included following this notice) for the terms and conditions of their use.
 
