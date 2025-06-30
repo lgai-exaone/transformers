@@ -28,6 +28,7 @@ from ...masking_utils import create_causal_mask, create_sliding_window_causal_ma
 from ...modeling_flash_attention_utils import FlashAttentionKwargs
 from ...modeling_outputs import (
     BaseModelOutputWithPast,
+    CausalLMOutputWithPast,
 )
 from ...modeling_utils import ALL_ATTENTION_FUNCTIONS
 from ...processing_utils import Unpack
@@ -52,7 +53,7 @@ from ..llama.modeling_llama import (
 
 logger = logging.get_logger(__name__)
 
-_CHECKPOINT_FOR_DOC = "LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct"
+_CHECKPOINT_FOR_DOC = "LGAI-EXAONE/EXAONE-4.0-Instruct"
 _CONFIG_FOR_DOC = "Exaone4Config"
 
 
@@ -60,14 +61,15 @@ class Exaone4Config(PretrainedConfig):
     r"""
     This is the configuration class to store the configuration of a [`Exaone4Model`]. It is used to
     instantiate a EXAONE 4.0 model according to the specified arguments, defining the model architecture. Instantiating a
-    configuration with the defaults will yield a similar configuration to that of the EXAONE-3.5-7.8B-Instruct [LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct](https://huggingface.co/LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct)
+    configuration with the defaults will yield a similar configuration to that of the EXAONE-4.0-Instruct [LGAI-EXAONE/EXAONE-4.0-Instruct](https://huggingface.co/LGAI-EXAONE/EXAONE-4.0-Instruct)
+    NOTE: `EXAONE-4.0-Instruct` is a placeholder model ID. The exact model ID will be updated in the future.
 
     Configuration objects inherit from [`PretrainedConfig`] and can be used to control the model
     outputs. Read the documentation from [`PretrainedConfig`] for more information.
 
     Args:
         vocab_size (`int`, *optional*, defaults to 102400):
-            Vocabulary size of the EXAONE model. Defines the number of different tokens that can be represented by the
+            Vocabulary size of the EXAONE 4.0 model. Defines the number of different tokens that can be represented by the
             `inputs_ids` passed when calling [`Exaone4Model`].
         hidden_size (`int`, *optional*, defaults to 4096):
             Dimension of the hidden representations.
@@ -89,7 +91,7 @@ class Exaone4Config(PretrainedConfig):
             The non-linear activation function (function or string) in the decoder.
         max_position_embeddings (`int`, *optional*, defaults to 2048):
             The maximum sequence length that this model might ever be used with. Typically set this to something large
-            just in case (e.g., 4096 for EXAONE 3.0, 32768 for EXAONE 3.5).
+            just in case (e.g., 32768 for EXAONE 3.5).
         initializer_range (`float`, *optional*, defaults to 0.02):
             The standard deviation of the truncated_normal_initializer for initializing all weight matrices.
         rms_norm_eps (`float`, *optional*, defaults to 1e-05):
@@ -683,7 +685,66 @@ class Exaone4Model(Exaone4PreTrainedModel, LlamaModel):
 
 
 class Exaone4ForCausalLM(LlamaForCausalLM):
-    pass
+    def forward(
+        self,
+        input_ids: Optional[torch.LongTensor] = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        position_ids: Optional[torch.LongTensor] = None,
+        past_key_values: Optional[Cache] = None,
+        inputs_embeds: Optional[torch.FloatTensor] = None,
+        labels: Optional[torch.LongTensor] = None,
+        use_cache: Optional[bool] = None,
+        output_attentions: Optional[bool] = None,
+        output_hidden_states: Optional[bool] = None,
+        cache_position: Optional[torch.LongTensor] = None,
+        logits_to_keep: Union[int, torch.Tensor] = 0,
+        **kwargs: Unpack[KwargsForCausalLM],
+    ) -> CausalLMOutputWithPast:
+        r"""
+        labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
+            Labels for computing the masked language modeling loss. Indices should either be in `[0, ...,
+            config.vocab_size]` or -100 (see `input_ids` docstring). Tokens with indices set to `-100` are ignored
+            (masked), the loss is only computed for the tokens with labels in `[0, ..., config.vocab_size]`.
+
+        Example:
+
+        ```python
+        >>> from transformers import AutoModelForCausalLM, AutoTokenizer
+        >>> model = AutoModelForCausalLM.from_pretrained("LGAI-EXAONE/EXAONE-4.0-Instruct")
+        >>> tokenizer = AutoTokenizer.from_pretrained("LGAI-EXAONE/EXAONE-4.0-Instruct")
+
+        >>> prompt = "Explain how wonderful you are"
+        >>> messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt}
+        ]
+        >>> input_ids = tokenizer.apply_chat_template(
+            messages,
+            tokenize=True,
+            add_generation_prompt=True,
+            return_tensors="pt"
+        )
+
+        >>> output = model.generate(input_ids, max_new_tokens=128)
+        >>> tokenizer.decode(output[0], skip_special_tokens=True)
+        "[|system|]You are a helpful assistant.\n[|user|]Explain how wonderful you are\n[|assistant|]Thank you for your kind words! I'm here to assist you with information, answer questions, and help you in any way I can. My goal is to provide accurate, helpful, and timely responses. Whether you need help with a specific task, want to learn something new, or just need someone to talk to, I'm here for you. How can I assist you today?"
+        ```
+
+        NOTE: `EXAONE-4.0-Instruct` is a placeholder model ID. The exact model ID will be updated in the future."""
+        super().forward(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+            past_key_values=past_key_values,
+            inputs_embeds=inputs_embeds,
+            labels=labels,
+            use_cache=use_cache,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            cache_position=cache_position,
+            logits_to_keep=logits_to_keep,
+            **kwargs,
+        )
 
 
 class Exaone4ForSequenceClassification(LlamaForSequenceClassification):

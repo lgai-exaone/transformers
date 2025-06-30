@@ -56,14 +56,15 @@ class Exaone4Config(PretrainedConfig):
     r"""
     This is the configuration class to store the configuration of a [`Exaone4Model`]. It is used to
     instantiate a EXAONE 4.0 model according to the specified arguments, defining the model architecture. Instantiating a
-    configuration with the defaults will yield a similar configuration to that of the EXAONE-3.5-7.8B-Instruct [LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct](https://huggingface.co/LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct)
+    configuration with the defaults will yield a similar configuration to that of the EXAONE-4.0-Instruct [LGAI-EXAONE/EXAONE-4.0-Instruct](https://huggingface.co/LGAI-EXAONE/EXAONE-4.0-Instruct)
+    NOTE: `EXAONE-4.0-Instruct` is a placeholder model ID. The exact model ID will be updated in the future.
 
     Configuration objects inherit from [`PretrainedConfig`] and can be used to control the model
     outputs. Read the documentation from [`PretrainedConfig`] for more information.
 
     Args:
         vocab_size (`int`, *optional*, defaults to 102400):
-            Vocabulary size of the EXAONE model. Defines the number of different tokens that can be represented by the
+            Vocabulary size of the EXAONE 4.0 model. Defines the number of different tokens that can be represented by the
             `inputs_ids` passed when calling [`Exaone4Model`].
         hidden_size (`int`, *optional*, defaults to 4096):
             Dimension of the hidden representations.
@@ -85,7 +86,7 @@ class Exaone4Config(PretrainedConfig):
             The non-linear activation function (function or string) in the decoder.
         max_position_embeddings (`int`, *optional*, defaults to 2048):
             The maximum sequence length that this model might ever be used with. Typically set this to something large
-            just in case (e.g., 4096 for EXAONE 3.0, 32768 for EXAONE 3.5).
+            just in case (e.g., 32768 for EXAONE 3.5).
         initializer_range (`float`, *optional*, defaults to 0.02):
             The standard deviation of the truncated_normal_initializer for initializing all weight matrices.
         rms_norm_eps (`float`, *optional*, defaults to 1e-05):
